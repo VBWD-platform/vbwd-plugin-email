@@ -56,7 +56,9 @@ class EmailService:
 
         subject = self._render(template.subject, context)
         html_body = self._render(template.html_body, context)
-        text_body = self._render(template.text_body, context) if template.text_body else ""
+        text_body = (
+            self._render(template.text_body, context) if template.text_body else ""
+        )
 
         message = EmailMessage(
             to_address=to_address,
@@ -77,7 +79,9 @@ class EmailService:
         return {
             "subject": self._render(template.subject, context),
             "html_body": self._render(template.html_body, context),
-            "text_body": self._render(template.text_body, context) if template.text_body else "",
+            "text_body": self._render(template.text_body, context)
+            if template.text_body
+            else "",
         }
 
     # ------------------------------------------------------------------
@@ -86,10 +90,9 @@ class EmailService:
 
     def _get_template(self, event_type: str):
         from plugins.email.src.models.email_template import EmailTemplate
+
         return (
-            self._session.query(EmailTemplate)
-            .filter_by(event_type=event_type)
-            .first()
+            self._session.query(EmailTemplate).filter_by(event_type=event_type).first()
         )
 
     def _render(self, source: str, context: dict) -> str:

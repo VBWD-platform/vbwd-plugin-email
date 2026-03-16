@@ -6,7 +6,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
 
-from plugins.email.src.services.base_sender import EmailMessage, EmailSendError, IEmailSender
+from plugins.email.src.services.base_sender import (
+    EmailMessage,
+    EmailSendError,
+    IEmailSender,
+)
 
 
 class SmtpEmailSender:

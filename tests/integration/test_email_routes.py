@@ -7,7 +7,9 @@ import os
 import sys
 import uuid
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
+)
 
 os.environ["FLASK_ENV"] = "testing"
 os.environ["TESTING"] = "true"
@@ -22,6 +24,7 @@ def _test_db_url() -> str:
 
 def _ensure_test_db(url: str) -> None:
     from sqlalchemy import create_engine, text
+
     main_url = url.rsplit("/", 1)[0] + "/postgres"
     dbname = url.rsplit("/", 1)[1].split("?")[0]
     engine = create_engine(main_url, isolation_level="AUTOCOMMIT")
@@ -39,6 +42,7 @@ def _ensure_test_db(url: str) -> None:
 @pytest.fixture(scope="session")
 def app():
     from src.app import create_app
+
     url = _test_db_url()
     _ensure_test_db(url)
     test_config = {
@@ -53,6 +57,7 @@ def app():
     }
     app = create_app(test_config)
     from src.extensions import limiter
+
     limiter.reset()
     yield app
 
@@ -65,8 +70,10 @@ def client(app):
 @pytest.fixture
 def db(app):
     from src.extensions import db
+
     with app.app_context():
         from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
+
         db.create_all()
         yield db
         db.session.remove()
@@ -77,6 +84,7 @@ def _make_user(app, db_session, email: str, role: str = "ADMIN", active: bool = 
     from src.models.user import User
     from src.models.enums import UserRole, UserStatus
     import bcrypt
+
     pw = bcrypt.hashpw(b"TestPass123@", bcrypt.gensalt()).decode()
     user = User(
         email=email,
@@ -90,7 +98,9 @@ def _make_user(app, db_session, email: str, role: str = "ADMIN", active: bool = 
 
 
 def _login(client, email: str, password: str = "TestPass123@"):
-    resp = client.post("/api/v1/auth/login", json={"email": email, "password": password})
+    resp = client.post(
+        "/api/v1/auth/login", json={"email": email, "password": password}
+    )
     data = resp.json
     return data.get("token") or data.get("access_token")
 
@@ -112,6 +122,7 @@ def user_token(client, db, app):
 def _seed_template(app, db, event_type: str = "subscription.activated") -> str:
     with app.app_context():
         from plugins.email.src.models.email_template import EmailTemplate
+
         tpl = EmailTemplate(
             event_type=event_type,
             subject="Hello {{ user_name }}",
@@ -134,13 +145,24 @@ class TestEmailRoutesSecurity:
         assert client.get("/api/v1/admin/email/templates").status_code == 401
 
     def test_get_requires_auth(self, client, db):
-        assert client.get(f"/api/v1/admin/email/templates/{uuid.uuid4()}").status_code == 401
+        assert (
+            client.get(f"/api/v1/admin/email/templates/{uuid.uuid4()}").status_code
+            == 401
+        )
 
     def test_put_requires_auth(self, client, db):
-        assert client.put(f"/api/v1/admin/email/templates/{uuid.uuid4()}", json={}).status_code == 401
+        assert (
+            client.put(
+                f"/api/v1/admin/email/templates/{uuid.uuid4()}", json={}
+            ).status_code
+            == 401
+        )
 
     def test_preview_requires_auth(self, client, db):
-        assert client.post("/api/v1/admin/email/templates/preview", json={}).status_code == 401
+        assert (
+            client.post("/api/v1/admin/email/templates/preview", json={}).status_code
+            == 401
+        )
 
     def test_event_types_requires_auth(self, client, db):
         assert client.get("/api/v1/admin/email/event-types").status_code == 401
@@ -203,7 +225,16 @@ class TestListTemplates:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         tpl = resp.json[0]
-        for key in ("id", "event_type", "subject", "html_body", "text_body", "is_active", "created_at", "updated_at"):
+        for key in (
+            "id",
+            "event_type",
+            "subject",
+            "html_body",
+            "text_body",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ):
             assert key in tpl
 
 
@@ -374,7 +405,9 @@ class TestEventTypes:
         }
         assert event_types == expected
 
-    def test_each_event_type_has_description_and_variables(self, client, db, admin_token):
+    def test_each_event_type_has_description_and_variables(
+        self, client, db, admin_token
+    ):
         resp = client.get(
             "/api/v1/admin/email/event-types",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -393,6 +426,7 @@ class TestEventTypes:
 class TestEmailTemplateMigration:
     def test_table_exists_with_correct_columns(self, db, app):
         from sqlalchemy import text
+
         with app.app_context():
             result = db.session.execute(
                 text(
@@ -401,18 +435,34 @@ class TestEmailTemplateMigration:
                 )
             ).fetchall()
             columns = {row[0] for row in result}
-            required = {"id", "event_type", "subject", "html_body", "text_body", "is_active", "created_at", "updated_at", "version"}
+            required = {
+                "id",
+                "event_type",
+                "subject",
+                "html_body",
+                "text_body",
+                "is_active",
+                "created_at",
+                "updated_at",
+                "version",
+            }
             assert required.issubset(columns), f"Missing columns: {required - columns}"
 
     def test_event_type_unique_constraint(self, db, app):
         from plugins.email.src.models.email_template import EmailTemplate
+
         with app.app_context():
-            t1 = EmailTemplate(event_type="dupe.test", subject="a", html_body="a", text_body="")
-            t2 = EmailTemplate(event_type="dupe.test", subject="b", html_body="b", text_body="")
+            t1 = EmailTemplate(
+                event_type="dupe.test", subject="a", html_body="a", text_body=""
+            )
+            t2 = EmailTemplate(
+                event_type="dupe.test", subject="b", html_body="b", text_body=""
+            )
             db.session.add(t1)
             db.session.commit()
             db.session.add(t2)
             from sqlalchemy.exc import IntegrityError
+
             with pytest.raises(IntegrityError):
                 db.session.commit()
             db.session.rollback()

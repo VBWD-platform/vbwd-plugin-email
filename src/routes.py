@@ -29,6 +29,7 @@ email_bp = Blueprint("email", __name__)
 def _email_cfg() -> dict:
     """Return the email plugin config dict from the config store, or {}."""
     from flask import current_app
+
     config_store = getattr(current_app, "config_store", None)
     if config_store:
         cfg = config_store.get_config("email")

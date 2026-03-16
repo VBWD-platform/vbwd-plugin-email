@@ -61,9 +61,12 @@ class TestSmtpEmailSender:
 
     def test_send_raises_email_send_error_on_smtp_exception(self):
         import smtplib
+
         sender = SmtpEmailSender(host="smtp.example.com")
         with patch("smtplib.SMTP") as mock_smtp_cls:
-            mock_smtp_cls.side_effect = smtplib.SMTPConnectError(421, "Connection refused")
+            mock_smtp_cls.side_effect = smtplib.SMTPConnectError(
+                421, "Connection refused"
+            )
             with pytest.raises(EmailSendError):
                 sender.send(_make_message())
 
@@ -76,8 +79,7 @@ class TestSmtpEmailSender:
 
     def test_from_address_uses_message_override(self):
         sender = SmtpEmailSender(
-            host="localhost", port=1025, use_tls=False,
-            from_address="default@x.com"
+            host="localhost", port=1025, use_tls=False, from_address="default@x.com"
         )
         with patch("smtplib.SMTP") as mock_smtp_cls:
             mock_smtp = MagicMock()

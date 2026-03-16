@@ -173,7 +173,9 @@ def register_handlers(bus: "EventBus", cfg: dict) -> None:
     def on_contact_form_received(_name: str, payload: dict) -> None:
         recipient = payload.get("recipient_email", "")
         if not recipient:
-            logger.warning("[email] contact_form.received: no recipient_email in payload")
+            logger.warning(
+                "[email] contact_form.received: no recipient_email in payload"
+            )
             return
         fields: list = payload.get("fields", [])
         rows = "\n".join(

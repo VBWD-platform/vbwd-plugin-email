@@ -2,7 +2,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from plugins.email.src.services.sender_registry import EmailSenderRegistry, SenderNotFoundError
+from plugins.email.src.services.sender_registry import (
+    EmailSenderRegistry,
+    SenderNotFoundError,
+)
 
 
 def _make_sender(sender_id: str):

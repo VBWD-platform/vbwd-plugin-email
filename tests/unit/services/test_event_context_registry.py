@@ -10,7 +10,11 @@ from plugins.email.src.services.event_context_registry import (
 _SCHEMA = {
     "description": "Test event",
     "variables": {
-        "user_email": {"type": "string", "description": "Recipient", "example": "a@b.com"},
+        "user_email": {
+            "type": "string",
+            "description": "Recipient",
+            "example": "a@b.com",
+        },
     },
 }
 
@@ -77,6 +81,7 @@ class TestCoreAutoRegistration:
     def test_importing_event_contexts_registers_core_events(self):
         """event_contexts.py auto-registers 8 core events."""
         import plugins.email.src.services.event_contexts  # noqa: F401
+
         all_events = [e["event_type"] for e in get_all()]
         assert "subscription.activated" in all_events
         assert "user.registered" in all_events

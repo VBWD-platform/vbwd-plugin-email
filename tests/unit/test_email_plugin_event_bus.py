@@ -82,7 +82,11 @@ class TestEmailHandlersFire:
         ):
             bus.publish(
                 "user.registered",
-                {"user_email": "new@example.com", "user_name": "Bob", "login_url": "/login"},
+                {
+                    "user_email": "new@example.com",
+                    "user_name": "Bob",
+                    "login_url": "/login",
+                },
             )
 
         mock_svc.send_event.assert_called_once()

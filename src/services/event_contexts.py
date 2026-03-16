@@ -385,7 +385,7 @@ EVENT_CONTEXTS: Dict[str, Dict[str, Any]] = {
             "fields": {
                 "type": "list",
                 "description": "List of form fields [{id, label, value}]",
-                "example": "[{\"label\": \"Name\", \"value\": \"Bob\"}]",
+                "example": '[{"label": "Name", "value": "Bob"}]',
             },
             "fields_text": {
                 "type": "string",
