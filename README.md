@@ -245,3 +245,13 @@ plugins/email/
     └── bin/
         └── populate_email.py
 ```
+
+---
+
+## Related
+
+| | Repository |
+|-|------------|
+| 🛠 Frontend (admin) | [vbwd-fe-admin-plugin-email](https://github.com/VBWD-platform/vbwd-fe-admin-plugin-email) |
+
+**Core:** [vbwd-backend](https://github.com/VBWD-platform/vbwd-backend)
