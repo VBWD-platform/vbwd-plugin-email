@@ -1,3 +1,4 @@
+# flake8: noqa: E501
 """Seed default email templates for all 8 event types."""
 from __future__ import annotations
 
