@@ -346,7 +346,7 @@ class TestPreviewTemplate:
 
 
 class TestEventTypes:
-    def test_returns_all_8_event_types(self, client, db, admin_token):
+    def test_returns_all_12_event_types(self, client, db, admin_token):
         resp = client.get(
             "/api/v1/admin/email/event-types",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -354,14 +354,23 @@ class TestEventTypes:
         assert resp.status_code == 200
         event_types = {e["event_type"] for e in resp.json}
         expected = {
+            # core subscription / billing
             "subscription.activated",
             "subscription.cancelled",
             "subscription.payment_failed",
             "subscription.renewed",
+            "subscription.expired",
+            # trial
             "trial.started",
             "trial.expiring_soon",
+            # user
             "user.registered",
             "user.password_reset",
+            # invoice
+            "invoice.created",
+            "invoice.paid",
+            # contact
+            "contact_form.received",
         }
         assert event_types == expected
 
