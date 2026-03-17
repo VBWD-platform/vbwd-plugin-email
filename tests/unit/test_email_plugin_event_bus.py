@@ -1,5 +1,4 @@
 """Unit tests — EmailPlugin wires event handlers via EventBus."""
-import pytest
 from unittest.mock import MagicMock, patch
 
 from src.events.bus import EventBus
