@@ -1,7 +1,7 @@
 """Unit tests — EmailPlugin wires event handlers via EventBus."""
 from unittest.mock import MagicMock, patch
 
-from src.events.bus import EventBus
+from vbwd.events.bus import EventBus
 from plugins.email import EmailPlugin
 
 

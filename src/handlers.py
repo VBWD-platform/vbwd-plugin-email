@@ -4,14 +4,14 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.events.bus import EventBus
+    from vbwd.events.bus import EventBus
 
 logger = logging.getLogger(__name__)
 
 
 def _make_email_service(cfg: dict):
     """Factory: create EmailService with active registry + db.session."""
-    from src.extensions import db
+    from vbwd.extensions import db
     from plugins.email.src.services.sender_registry import EmailSenderRegistry
     from plugins.email.src.services.smtp_sender import SmtpEmailSender
     from plugins.email.src.services.email_service import EmailService

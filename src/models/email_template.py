@@ -1,6 +1,6 @@
 """EmailTemplate model — stores per-event HTML/text templates."""
-from src.extensions import db
-from src.models.base import BaseModel
+from vbwd.extensions import db
+from vbwd.models.base import BaseModel
 
 
 class EmailTemplate(BaseModel):

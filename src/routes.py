@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
-from src.middleware.auth import require_auth, require_admin
-from src.utils.validation import parse_uuid_or_none
+from vbwd.middleware.auth import require_auth, require_admin
+from vbwd.utils.validation import parse_uuid_or_none
 
 email_bp = Blueprint("email", __name__)
 
@@ -39,7 +39,7 @@ def _email_cfg() -> dict:
 
 
 def _template_svc():
-    from src.extensions import db
+    from vbwd.extensions import db
     from plugins.email.src.services.email_service import EmailService
     from plugins.email.src.services.sender_registry import EmailSenderRegistry
     from plugins.email.src.services.smtp_sender import SmtpEmailSender
@@ -69,7 +69,7 @@ def _template_svc():
 @require_auth
 @require_admin
 def list_templates():
-    from src.extensions import db
+    from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
 
     templates = db.session.query(EmailTemplate).order_by(EmailTemplate.event_type).all()
@@ -112,7 +112,7 @@ def preview_template():
 def get_template(template_id: str):
     if parse_uuid_or_none(template_id) is None:
         return jsonify({"error": "invalid id"}), 400
-    from src.extensions import db
+    from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
 
     tpl = db.session.get(EmailTemplate, template_id)
@@ -127,7 +127,7 @@ def get_template(template_id: str):
 def update_template(template_id: str):
     if parse_uuid_or_none(template_id) is None:
         return jsonify({"error": "invalid id"}), 400
-    from src.extensions import db
+    from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
 
     tpl = db.session.get(EmailTemplate, template_id)

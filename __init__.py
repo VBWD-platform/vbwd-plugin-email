@@ -1,6 +1,6 @@
 """Email plugin — transactional email templates, SMTP transport, event handlers."""
 from typing import Optional, Dict, Any, TYPE_CHECKING
-from src.plugins.base import BasePlugin, PluginMetadata
+from vbwd.plugins.base import BasePlugin, PluginMetadata
 
 if TYPE_CHECKING:
     from flask import Blueprint

@@ -24,7 +24,7 @@ import time
 import pytest
 import requests
 
-from src.events.bus import EventBus
+from vbwd.events.bus import EventBus
 from plugins.email.src.handlers import register_handlers
 from plugins.email.src.models.email_template import EmailTemplate
 
@@ -87,7 +87,7 @@ requires_mailpit = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def app():
-    from src.app import create_app
+    from vbwd.app import create_app
 
     url = _test_db_url()
     _ensure_test_db(url)
@@ -105,7 +105,7 @@ def app():
 
 @pytest.fixture(scope="module")
 def db(app):
-    from src.extensions import db as _db
+    from vbwd.extensions import db as _db
 
     with app.app_context():
         _db.create_all()

@@ -32,7 +32,7 @@ from plugins.email.src.seeds import (  # noqa: E402
 
 
 def populate_email() -> None:
-    from src.extensions import db  # noqa: E402
+    from vbwd.extensions import db  # noqa: E402
 
     created = seed_default_templates(db.session)
     total = len(DEFAULT_TEMPLATES)
@@ -55,7 +55,7 @@ def populate_email() -> None:
 
 
 if __name__ == "__main__":
-    from src.app import create_app
+    from vbwd.app import create_app
 
     app = create_app()
     with app.app_context():

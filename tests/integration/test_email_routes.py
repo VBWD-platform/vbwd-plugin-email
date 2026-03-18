@@ -41,7 +41,7 @@ def _ensure_test_db(url: str) -> None:
 
 @pytest.fixture(scope="session")
 def app():
-    from src.app import create_app
+    from vbwd.app import create_app
 
     url = _test_db_url()
     _ensure_test_db(url)
@@ -56,7 +56,7 @@ def app():
         "FLASK_SECRET_KEY": "test-secret-key",
     }
     app = create_app(test_config)
-    from src.extensions import limiter
+    from vbwd.extensions import limiter
 
     limiter.reset()
     yield app
@@ -69,7 +69,7 @@ def client(app):
 
 @pytest.fixture
 def db(app):
-    from src.extensions import db
+    from vbwd.extensions import db
 
     with app.app_context():
         from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
@@ -81,8 +81,8 @@ def db(app):
 
 
 def _make_user(app, db_session, email: str, role: str = "ADMIN", active: bool = True):
-    from src.models.user import User
-    from src.models.enums import UserRole, UserStatus
+    from vbwd.models.user import User
+    from vbwd.models.enums import UserRole, UserStatus
     import bcrypt
 
     pw = bcrypt.hashpw(b"TestPass123@", bcrypt.gensalt()).decode()
