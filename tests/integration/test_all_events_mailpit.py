@@ -173,7 +173,11 @@ ALL_EVENTS = [
             "fields": [
                 {"id": "name", "label": "Full Name", "value": "Jack Visitor"},
                 {"id": "email", "label": "Email", "value": "jack@example.com"},
-                {"id": "message", "label": "Message", "value": "I want to learn more about your platform."},
+                {
+                    "id": "message",
+                    "label": "Message",
+                    "value": "I want to learn more about your platform.",
+                },
             ],
             "fields_text": "Full Name: Jack Visitor\nEmail: jack@example.com\nMessage: I want to learn more about your platform.",
         },
@@ -204,9 +208,7 @@ def _get_all_messages() -> list[dict]:
 
 
 def _get_message_body(message_id: str) -> dict:
-    response = requests.get(
-        f"{MAILPIT_API}/api/v1/message/{message_id}", timeout=5
-    )
+    response = requests.get(f"{MAILPIT_API}/api/v1/message/{message_id}", timeout=5)
     return response.json()
 
 
@@ -361,8 +363,7 @@ class TestAllEmailEvents:
             message_id = message["ID"]
             full_message = _get_message_body(message_id)
             recipients = [
-                address.get("Address", "")
-                for address in (full_message.get("To") or [])
+                address.get("Address", "") for address in (full_message.get("To") or [])
             ]
             for recipient in recipients:
                 message_bodies[recipient] = full_message
@@ -376,9 +377,7 @@ class TestAllEmailEvents:
             full_message = message_bodies.get(recipient)
 
             if full_message is None:
-                missing_events.append(
-                    f"{event['event_type']} → {recipient}"
-                )
+                missing_events.append(f"{event['event_type']} → {recipient}")
                 continue
 
             # Check subject
@@ -437,9 +436,9 @@ class TestAllEmailEvents:
         delivered_messages = _wait_for_messages(
             expected_count=len(ALL_EVENTS), timeout=20.0
         )
-        assert len(delivered_messages) == len(ALL_EVENTS), (
-            f"Expected {len(ALL_EVENTS)} emails, got {len(delivered_messages)}"
-        )
+        assert len(delivered_messages) == len(
+            ALL_EVENTS
+        ), f"Expected {len(ALL_EVENTS)} emails, got {len(delivered_messages)}"
 
     def test_no_duplicate_emails(self, app, database, event_bus, seeded_templates):
         """Each event should produce exactly one email — no duplicates."""
@@ -456,7 +455,7 @@ class TestAllEmailEvents:
         # Collect all recipient addresses
         all_recipients = []
         for message in delivered_messages:
-            for address in (message.get("To") or []):
+            for address in message.get("To") or []:
                 all_recipients.append(address.get("Address", ""))
 
         duplicates = [
@@ -488,9 +487,9 @@ class TestAllEmailEvents:
                 subject = full_message.get("Subject", "unknown")
                 empty_html_events.append(subject)
 
-        assert not empty_html_events, (
-            f"Emails with empty HTML body: {empty_html_events}"
-        )
+        assert (
+            not empty_html_events
+        ), f"Emails with empty HTML body: {empty_html_events}"
 
     def test_sender_address_is_configured(
         self, app, database, event_bus, seeded_templates
@@ -614,13 +613,12 @@ class TestFireAllAndLeaveInMailpit:
 
         for message in delivered_messages:
             recipients = ", ".join(
-                address.get("Address", "")
-                for address in (message.get("To") or [])
+                address.get("Address", "") for address in (message.get("To") or [])
             )
             print(f"  [{message.get('Subject', '?')}] → {recipients}")
 
         print()
 
-        assert len(delivered_messages) == len(ALL_EVENTS), (
-            f"Expected {len(ALL_EVENTS)} emails, got {len(delivered_messages)}"
-        )
+        assert len(delivered_messages) == len(
+            ALL_EVENTS
+        ), f"Expected {len(ALL_EVENTS)} emails, got {len(delivered_messages)}"
