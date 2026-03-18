@@ -179,7 +179,10 @@ ALL_EVENTS = [
                     "value": "I want to learn more about your platform.",
                 },
             ],
-            "fields_text": "Full Name: Jack Visitor\nEmail: jack@example.com\nMessage: I want to learn more about your platform.",
+            "fields_text": (
+                "Full Name: Jack Visitor\nEmail: jack@example.com\n"
+                "Message: I want to learn more about your platform."
+            ),
         },
         "expected_recipient": "event-contact-form@vbwd.test",
         "expected_subject_contains": "main-contact",
@@ -606,10 +609,11 @@ class TestFireAllAndLeaveInMailpit:
             expected_count=len(ALL_EVENTS), timeout=20.0
         )
 
-        print(f"\n{'=' * 60}")
+        separator = "=" * 60
+        print(f"\n{separator}")
         print(f"  {len(delivered_messages)} emails delivered to Mailpit")
-        print(f"  Open http://localhost:8025 to inspect them")
-        print(f"{'=' * 60}")
+        print("  Open http://localhost:8025 to inspect them")
+        print(separator)
 
         for message in delivered_messages:
             recipients = ", ".join(
