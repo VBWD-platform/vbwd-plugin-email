@@ -403,7 +403,8 @@ class TestEventTypes:
             # contact
             "contact_form.received",
         }
-        assert event_types == expected
+        # Booking events may also be registered if booking plugin is loaded
+        assert expected.issubset(event_types)
 
     def test_each_event_type_has_description_and_variables(
         self, client, db, admin_token

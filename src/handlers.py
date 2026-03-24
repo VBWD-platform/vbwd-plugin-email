@@ -1,5 +1,16 @@
-"""Email event handlers — subscribe to EventBus and fire emails."""
+"""Email event handlers — subscribe to EventBus and fire emails.
+
+Architecture: The email plugin is AGNOSTIC. It does not know about booking,
+taro, ghrm, or any other plugin. It subscribes to ALL events via
+``bus.subscribe_all()`` and forwards every event to ``EmailService.send_event()``.
+If a template exists in the DB for that event_type, the email is sent.
+If not, the event is silently ignored.
+
+Special handling exists only for core events that need payload transformation
+(e.g. contact_form.received uses ``recipient_email`` instead of ``user_email``).
+"""
 from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -32,15 +43,15 @@ def _make_email_service(cfg: dict):
 
 
 def register_handlers(bus: "EventBus", cfg: dict) -> None:
-    """Subscribe email handlers to EventBus events.
+    """Subscribe email handlers to EventBus.
 
-    Called from ``EmailPlugin.register_event_handlers(bus)`` with the plugin
-    config dict.  Uses ``bus.subscribe()`` — no broken ``event_dispatcher``
-    import needed.
+    Uses ``bus.subscribe_all()`` for a single generic handler that forwards
+    every event to EmailService. The service checks the DB for a matching
+    template — if one exists, the email is sent; otherwise the event is
+    silently ignored.
 
-    Args:
-        bus: The ``EventBus`` singleton.
-        cfg: Plugin configuration dict (SMTP settings etc.).
+    Special-case handlers are registered for events that need payload
+    transformation (e.g. contact_form.received).
     """
 
     def _safe_send(event_type: str, to: str, context: dict) -> None:
@@ -50,125 +61,28 @@ def register_handlers(bus: "EventBus", cfg: dict) -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning("[email] Failed to send %s to %s: %s", event_type, to, exc)
 
-    def on_subscription_activated(_name: str, payload: dict) -> None:
-        _safe_send(
-            "subscription.activated",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "plan_name": payload.get("plan_name", ""),
-                "plan_price": payload.get("plan_price", ""),
-                "billing_period": payload.get("billing_period", ""),
-                "start_date": payload.get("start_date", ""),
-                "next_billing_date": payload.get("next_billing_date", ""),
-                "dashboard_url": payload.get("dashboard_url", "/dashboard"),
-            },
-        )
+    # ── Generic handler (catches ALL events) ──────────────────────────────
 
-    def on_subscription_cancelled(_name: str, payload: dict) -> None:
-        _safe_send(
-            "subscription.cancelled",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "plan_name": payload.get("plan_name", ""),
-                "end_date": payload.get("end_date", ""),
-                "resubscribe_url": payload.get("resubscribe_url", "/plans"),
-            },
-        )
+    def _on_any_event(event_name: str, payload: dict) -> None:
+        """Generic handler: forward any event to EmailService.
 
-    def on_subscription_payment_failed(_name: str, payload: dict) -> None:
-        _safe_send(
-            "subscription.payment_failed",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "plan_name": payload.get("plan_name", ""),
-                "amount": payload.get("amount", ""),
-                "retry_date": payload.get("retry_date", ""),
-                "update_payment_url": payload.get("update_payment_url", "/billing"),
-            },
-        )
+        The recipient is resolved from the payload:
+        - ``user_email`` (standard for most events)
+        - ``recipient_email`` (for contact_form.received)
 
-    def on_subscription_renewed(_name: str, payload: dict) -> None:
-        _safe_send(
-            "subscription.renewed",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "plan_name": payload.get("plan_name", ""),
-                "amount_charged": payload.get("amount_charged", ""),
-                "next_billing_date": payload.get("next_billing_date", ""),
-                "invoice_url": payload.get("invoice_url", "/invoices"),
-            },
-        )
+        The entire payload dict is passed as the template context.
+        """
+        to = payload.get("user_email") or payload.get("recipient_email", "")
+        if not to:
+            return
 
-    def on_user_registered(_name: str, payload: dict) -> None:
-        _safe_send(
-            "user.registered",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "login_url": payload.get("login_url", "/login"),
-            },
-        )
+        _safe_send(event_name, to, payload)
 
-    def on_user_password_reset(_name: str, payload: dict) -> None:
-        _safe_send(
-            "user.password_reset",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "reset_url": payload.get("reset_url", ""),
-                "expires_in": payload.get("expires_in", "1 hour"),
-            },
-        )
+    bus.subscribe_all(_on_any_event)
 
-    def on_subscription_expired(_name: str, payload: dict) -> None:
-        _safe_send(
-            "subscription.expired",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "plan_name": payload.get("plan_name", ""),
-                "resubscribe_url": payload.get("resubscribe_url", "/pricing"),
-            },
-        )
-
-    def on_invoice_created(_name: str, payload: dict) -> None:
-        _safe_send(
-            "invoice.created",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "invoice_id": payload.get("invoice_id", ""),
-                "amount": payload.get("amount", ""),
-                "due_date": payload.get("due_date", ""),
-                "invoice_url": payload.get("invoice_url", "/invoices"),
-            },
-        )
-
-    def on_invoice_paid(_name: str, payload: dict) -> None:
-        _safe_send(
-            "invoice.paid",
-            payload.get("user_email", ""),
-            {
-                "user_name": payload.get("user_name", ""),
-                "user_email": payload.get("user_email", ""),
-                "invoice_id": payload.get("invoice_id", ""),
-                "amount": payload.get("amount", ""),
-                "paid_date": payload.get("paid_date", ""),
-                "invoice_url": payload.get("invoice_url", "/invoices"),
-            },
-        )
+    # ── Special-case: contact_form.received ───────────────────────────────
+    # Needs payload transformation (fields → fields_text) that plugins
+    # cannot do themselves because the template expects a specific format.
 
     def on_contact_form_received(_name: str, payload: dict) -> None:
         recipient = payload.get("recipient_email", "")
@@ -194,15 +108,6 @@ def register_handlers(bus: "EventBus", cfg: dict) -> None:
             },
         )
 
-    bus.subscribe("subscription.activated", on_subscription_activated)
-    bus.subscribe("subscription.cancelled", on_subscription_cancelled)
-    bus.subscribe("subscription.expired", on_subscription_expired)
-    bus.subscribe("subscription.payment_failed", on_subscription_payment_failed)
-    bus.subscribe("subscription.renewed", on_subscription_renewed)
-    bus.subscribe("invoice.created", on_invoice_created)
-    bus.subscribe("invoice.paid", on_invoice_paid)
-    bus.subscribe("user.registered", on_user_registered)
-    bus.subscribe("user.password_reset", on_user_password_reset)
     bus.subscribe("contact_form.received", on_contact_form_received)
 
-    logger.info("[email] Event handlers registered")
+    logger.info("[email] Event handlers registered (generic + contact_form)")

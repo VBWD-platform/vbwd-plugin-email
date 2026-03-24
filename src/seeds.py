@@ -1,5 +1,5 @@
 # flake8: noqa: E501
-"""Seed default email templates for all 8 event types."""
+"""Seed default email templates for all event types."""
 from __future__ import annotations
 
 
@@ -214,6 +214,76 @@ DEFAULT_TEMPLATES = [
 </body>
 </html>""",
         "text_body": "Hi {{ user_name }},\n\nReset your password (expires in {{ expires_in }}): {{ reset_url }}\n\nIgnore if you did not request this.",
+        "is_active": True,
+    },
+    {
+        "event_type": "booking.created",
+        "subject": "Booking confirmed — {{ resource_name }}",
+        "html_body": """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="color: #27ae60;">Booking confirmed</h1>
+  <p>Hi {{ user_name }},</p>
+  <p>Your booking for <strong>{{ resource_name }}</strong> has been confirmed.</p>
+  <ul>
+    <li>Start: {{ start_at }}</li>
+    <li>End: {{ end_at }}</li>
+  </ul>
+  <p><a href="{{ booking_url }}" style="background:#3498db;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;">View Booking</a></p>
+</body>
+</html>""",
+        "text_body": "Hi {{ user_name }},\n\nYour booking for {{ resource_name }} is confirmed.\nStart: {{ start_at }}\nEnd: {{ end_at }}\n\nView: {{ booking_url }}",
+        "is_active": True,
+    },
+    {
+        "event_type": "booking.cancelled",
+        "subject": "Booking cancelled — {{ resource_name }}",
+        "html_body": """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="color: #e74c3c;">Booking cancelled</h1>
+  <p>Hi {{ user_name }},</p>
+  <p>Your booking for <strong>{{ resource_name }}</strong> has been cancelled.</p>
+  <p><a href="{{ dashboard_url }}" style="background:#3498db;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;">View My Bookings</a></p>
+</body>
+</html>""",
+        "text_body": "Hi {{ user_name }},\n\nYour booking for {{ resource_name }} has been cancelled.\n\nView bookings: {{ dashboard_url }}",
+        "is_active": True,
+    },
+    {
+        "event_type": "booking.cancelled_by_provider",
+        "subject": "Booking cancelled by provider — {{ resource_name }}",
+        "html_body": """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="color: #e74c3c;">Booking cancelled by provider</h1>
+  <p>Hi {{ user_name }},</p>
+  <p>Your booking for <strong>{{ resource_name }}</strong> has been cancelled by the provider.</p>
+  <p>Reason: {{ reason }}</p>
+  <p>A full refund will be issued.</p>
+  <p><a href="{{ dashboard_url }}" style="background:#3498db;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;">View My Bookings</a></p>
+</body>
+</html>""",
+        "text_body": "Hi {{ user_name }},\n\nYour booking for {{ resource_name }} was cancelled by the provider.\nReason: {{ reason }}\nA full refund will be issued.\n\nView bookings: {{ dashboard_url }}",
+        "is_active": True,
+    },
+    {
+        "event_type": "booking.completed",
+        "subject": "Booking completed — {{ resource_name }}",
+        "html_body": """\
+<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+  <h1 style="color: #2c3e50;">Booking completed</h1>
+  <p>Hi {{ user_name }},</p>
+  <p>Your booking for <strong>{{ resource_name }}</strong> has been completed. Thank you!</p>
+  <p><a href="{{ dashboard_url }}" style="background:#3498db;color:#fff;padding:10px 20px;border-radius:4px;text-decoration:none;">View My Bookings</a></p>
+</body>
+</html>""",
+        "text_body": "Hi {{ user_name }},\n\nYour booking for {{ resource_name }} has been completed. Thank you!",
         "is_active": True,
     },
 ]

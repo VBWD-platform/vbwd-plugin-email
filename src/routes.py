@@ -77,6 +77,103 @@ def list_templates():
 
 
 # ---------------------------------------------------------------------------
+# Create template
+# ---------------------------------------------------------------------------
+
+
+@email_bp.route("/api/v1/admin/email/templates", methods=["POST"])
+@require_auth
+@require_admin
+def create_template():
+    from vbwd.extensions import db
+    from plugins.email.src.models.email_template import EmailTemplate
+
+    data = request.get_json(silent=True) or {}
+    if not data.get("event_type"):
+        return jsonify({"error": "event_type required"}), 400
+
+    tpl = EmailTemplate(
+        event_type=data["event_type"],
+        subject=data.get("subject", ""),
+        html_body=data.get("html_body", ""),
+        text_body=data.get("text_body", ""),
+        is_active=data.get("is_active", True),
+    )
+    db.session.add(tpl)
+    db.session.commit()
+    return jsonify(tpl.to_dict()), 201
+
+
+# ---------------------------------------------------------------------------
+# Import templates (bulk create/update from JSON)
+# ---------------------------------------------------------------------------
+
+
+@email_bp.route("/api/v1/admin/email/templates/import", methods=["POST"])
+@require_auth
+@require_admin
+def import_templates():
+    from vbwd.extensions import db
+    from plugins.email.src.models.email_template import EmailTemplate
+
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, list):
+        return jsonify({"error": "JSON array of templates required"}), 400
+
+    created = 0
+    updated = 0
+    for item in data:
+        event_type = item.get("event_type")
+        if not event_type:
+            continue
+
+        existing = (
+            db.session.query(EmailTemplate).filter_by(event_type=event_type).first()
+        )
+        if existing:
+            existing.subject = item.get("subject", existing.subject)
+            existing.html_body = item.get("html_body", existing.html_body)
+            existing.text_body = item.get("text_body", existing.text_body)
+            existing.is_active = item.get("is_active", existing.is_active)
+            updated += 1
+        else:
+            tpl = EmailTemplate(
+                event_type=event_type,
+                subject=item.get("subject", ""),
+                html_body=item.get("html_body", ""),
+                text_body=item.get("text_body", ""),
+                is_active=item.get("is_active", True),
+            )
+            db.session.add(tpl)
+            created += 1
+
+    db.session.commit()
+    return jsonify({"created": created, "updated": updated}), 200
+
+
+# ---------------------------------------------------------------------------
+# Delete template
+# ---------------------------------------------------------------------------
+
+
+@email_bp.route("/api/v1/admin/email/templates/<template_id>", methods=["DELETE"])
+@require_auth
+@require_admin
+def delete_template(template_id: str):
+    if parse_uuid_or_none(template_id) is None:
+        return jsonify({"error": "invalid id"}), 400
+    from vbwd.extensions import db
+    from plugins.email.src.models.email_template import EmailTemplate
+
+    tpl = db.session.get(EmailTemplate, template_id)
+    if tpl is None:
+        return jsonify({"error": "not found"}), 404
+    db.session.delete(tpl)
+    db.session.commit()
+    return jsonify({"deleted": True}), 200
+
+
+# ---------------------------------------------------------------------------
 # Preview (must be before /<template_id> so Flask doesn't swallow "preview")
 # ---------------------------------------------------------------------------
 

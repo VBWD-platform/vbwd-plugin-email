@@ -165,6 +165,55 @@ ALL_EVENTS = [
         "expected_body_contains": "$99.00",
     },
     {
+        "event_type": "booking.created",
+        "payload": {
+            "user_email": "event-booking-created@vbwd.test",
+            "user_name": "Alice Booker",
+            "resource_name": "Dr. Smith",
+            "start_at": "2026-04-01T10:00:00",
+            "end_at": "2026-04-01T10:30:00",
+            "booking_url": "/dashboard/bookings/uuid-123",
+        },
+        "expected_recipient": "event-booking-created@vbwd.test",
+        "expected_subject_contains": "Dr. Smith",
+        "expected_body_contains": "Dr. Smith",
+    },
+    {
+        "event_type": "booking.cancelled",
+        "payload": {
+            "user_email": "event-booking-cancelled@vbwd.test",
+            "user_name": "Bob Canceller",
+            "resource_name": "Meeting Room A",
+            "cancelled_by": "user",
+        },
+        "expected_recipient": "event-booking-cancelled@vbwd.test",
+        "expected_subject_contains": "Meeting Room A",
+        "expected_body_contains": "Meeting Room A",
+    },
+    {
+        "event_type": "booking.cancelled_by_provider",
+        "payload": {
+            "user_email": "event-booking-provider-cancel@vbwd.test",
+            "user_name": "Carol Patient",
+            "resource_name": "Dr. Johnson",
+            "reason": "Doctor is unavailable",
+        },
+        "expected_recipient": "event-booking-provider-cancel@vbwd.test",
+        "expected_subject_contains": "Dr. Johnson",
+        "expected_body_contains": "Doctor is unavailable",
+    },
+    {
+        "event_type": "booking.completed",
+        "payload": {
+            "user_email": "event-booking-completed@vbwd.test",
+            "user_name": "Dave Visitor",
+            "resource_name": "Spa Room 1",
+        },
+        "expected_recipient": "event-booking-completed@vbwd.test",
+        "expected_subject_contains": "Spa Room 1",
+        "expected_body_contains": "completed",
+    },
+    {
         "event_type": "contact_form.received",
         "payload": {
             "widget_slug": "main-contact",

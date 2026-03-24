@@ -1,4 +1,9 @@
-"""Unit tests — EmailPlugin wires event handlers via EventBus."""
+"""Unit tests — EmailPlugin wires a generic event handler via EventBus.
+
+The email plugin is AGNOSTIC: it uses bus.subscribe_all() to receive every
+event and forwards it to EmailService.send_event(). If a template exists
+for the event_type, an email is sent; otherwise the event is ignored.
+"""
 from unittest.mock import MagicMock, patch
 
 from vbwd.events.bus import EventBus
@@ -15,42 +20,52 @@ def _enabled_plugin(config=None) -> tuple:
     return plugin, bus
 
 
-class TestEmailPluginRegistersHandlers:
-    def test_subscription_activated_has_subscriber(self):
+class TestGenericEventHandler:
+    """The email plugin handles ANY event via subscribe_all."""
+
+    def test_global_subscriber_registered(self):
         _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("subscription.activated")
+        assert len(bus._global_subscribers) > 0
 
-    def test_subscription_cancelled_has_subscriber(self):
-        _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("subscription.cancelled")
-
-    def test_subscription_payment_failed_has_subscriber(self):
-        _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("subscription.payment_failed")
-
-    def test_subscription_renewed_has_subscriber(self):
-        _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("subscription.renewed")
-
-    def test_user_registered_has_subscriber(self):
-        _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("user.registered")
-
-    def test_user_password_reset_has_subscriber(self):
-        _plugin, bus = _enabled_plugin()
-        assert bus.has_subscribers("user.password_reset")
-
-
-class TestEmailHandlersFire:
-    def test_subscription_activated_calls_send_event(self):
-        """Publishing subscription.activated triggers EmailService.send_event."""
+    def test_any_event_with_user_email_calls_send_event(self):
         _plugin, bus = _enabled_plugin({"smtp_host": "localhost"})
-
         mock_svc = MagicMock()
         mock_svc.send_event.return_value = True
 
         with patch(
-            "plugins.email.src.handlers._make_email_service", return_value=mock_svc
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
+        ):
+            bus.publish(
+                "some.future.event",
+                {"user_email": "test@example.com", "key": "value"},
+            )
+
+        mock_svc.send_event.assert_called_once()
+        args = mock_svc.send_event.call_args
+        assert args[0][0] == "some.future.event"
+        assert args[0][1] == "test@example.com"
+
+    def test_event_without_email_is_ignored(self):
+        _plugin, bus = _enabled_plugin()
+        mock_svc = MagicMock()
+
+        with patch(
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
+        ):
+            bus.publish("some.event", {"data": "no email field"})
+
+        mock_svc.send_event.assert_not_called()
+
+    def test_subscription_activated_calls_send_event(self):
+        _plugin, bus = _enabled_plugin({"smtp_host": "localhost"})
+        mock_svc = MagicMock()
+        mock_svc.send_event.return_value = True
+
+        with patch(
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
         ):
             bus.publish(
                 "subscription.activated",
@@ -58,38 +73,35 @@ class TestEmailHandlersFire:
                     "user_email": "user@example.com",
                     "user_name": "Alice",
                     "plan_name": "Pro",
-                    "plan_price": "$29",
-                    "billing_period": "monthly",
-                    "start_date": "2026-03-15",
-                    "next_billing_date": "2026-04-15",
-                    "dashboard_url": "/dashboard",
                 },
             )
 
         mock_svc.send_event.assert_called_once()
-        args = mock_svc.send_event.call_args
-        assert args[0][0] == "subscription.activated"
-        assert args[0][1] == "user@example.com"
+        assert mock_svc.send_event.call_args[0][0] == "subscription.activated"
+        assert mock_svc.send_event.call_args[0][1] == "user@example.com"
 
-    def test_user_registered_calls_send_event(self):
-        _plugin, bus = _enabled_plugin()
+    def test_booking_created_calls_send_event(self):
+        """Booking events are handled generically — no booking-specific code."""
+        _plugin, bus = _enabled_plugin({"smtp_host": "localhost"})
         mock_svc = MagicMock()
         mock_svc.send_event.return_value = True
 
         with patch(
-            "plugins.email.src.handlers._make_email_service", return_value=mock_svc
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
         ):
             bus.publish(
-                "user.registered",
+                "booking.created",
                 {
-                    "user_email": "new@example.com",
-                    "user_name": "Bob",
-                    "login_url": "/login",
+                    "user_email": "booker@example.com",
+                    "user_name": "Alice",
+                    "resource_name": "Dr. Smith",
                 },
             )
 
         mock_svc.send_event.assert_called_once()
-        assert mock_svc.send_event.call_args[0][1] == "new@example.com"
+        assert mock_svc.send_event.call_args[0][0] == "booking.created"
+        assert mock_svc.send_event.call_args[0][1] == "booker@example.com"
 
     def test_send_failure_does_not_propagate(self):
         """A crashing EmailService doesn't raise to the caller."""
@@ -98,25 +110,44 @@ class TestEmailHandlersFire:
         mock_svc.send_event.side_effect = RuntimeError("smtp down")
 
         with patch(
-            "plugins.email.src.handlers._make_email_service", return_value=mock_svc
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
         ):
-            # Should not raise
             bus.publish("user.registered", {"user_email": "a@b.com"})
 
 
-class TestRegisterHandlersFunctionDirectly:
-    def test_register_handlers_subscribes_all_events(self):
-        from plugins.email.src.handlers import register_handlers
+class TestContactFormSpecialCase:
+    """contact_form.received has special handling (recipient_email, fields_text)."""
 
-        bus = EventBus()
-        register_handlers(bus, {})
+    def test_contact_form_has_dedicated_subscriber(self):
+        _plugin, bus = _enabled_plugin()
+        assert bus.has_subscribers("contact_form.received")
 
-        for event in [
-            "subscription.activated",
-            "subscription.cancelled",
-            "subscription.payment_failed",
-            "subscription.renewed",
-            "user.registered",
-            "user.password_reset",
-        ]:
-            assert bus.has_subscribers(event), f"Expected subscriber for {event}"
+    def test_contact_form_uses_recipient_email(self):
+        _plugin, bus = _enabled_plugin({"smtp_host": "localhost"})
+        mock_svc = MagicMock()
+        mock_svc.send_event.return_value = True
+
+        with patch(
+            "plugins.email.src.handlers._make_email_service",
+            return_value=mock_svc,
+        ):
+            bus.publish(
+                "contact_form.received",
+                {
+                    "recipient_email": "admin@example.com",
+                    "widget_slug": "contact",
+                    "fields": [{"label": "Name", "value": "Bob"}],
+                },
+            )
+
+        # Called twice: once by the dedicated handler, once by the global handler
+        # The dedicated handler transforms fields → fields_text
+        assert mock_svc.send_event.call_count >= 1
+        # At least one call should have fields_text
+        calls = mock_svc.send_event.call_args_list
+        dedicated_call = next(
+            (c for c in calls if "fields_text" in c[0][2]),
+            None,
+        )
+        assert dedicated_call is not None
