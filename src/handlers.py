@@ -63,16 +63,20 @@ def register_handlers(bus: "EventBus", cfg: dict) -> None:
 
     # ── Generic handler (catches ALL events) ──────────────────────────────
 
+    # Events with dedicated handlers — skip in generic to avoid duplicates
+    _events_with_dedicated_handler = {"contact_form.received"}
+
     def _on_any_event(event_name: str, payload: dict) -> None:
         """Generic handler: forward any event to EmailService.
 
-        The recipient is resolved from the payload:
-        - ``user_email`` (standard for most events)
-        - ``recipient_email`` (for contact_form.received)
-
+        Skips events that have dedicated handlers (to avoid duplicate emails).
+        The recipient is resolved from ``user_email`` in the payload.
         The entire payload dict is passed as the template context.
         """
-        to = payload.get("user_email") or payload.get("recipient_email", "")
+        if event_name in _events_with_dedicated_handler:
+            return
+
+        to = payload.get("user_email", "")
         if not to:
             return
 
