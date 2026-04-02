@@ -1,0 +1,72 @@
+[
+  {
+    "event_type": "user.registered",
+    "subject": "Welcome to {{ platform_name }}!",
+    "html_body": "<h1>Welcome!</h1><p>Hi {{ user_name }},</p><p>Your account has been created. Please verify your email to get started.</p><p><a href=\"{{ verify_url }}\">Verify email</a></p>",
+    "text_body": "Hi {{ user_name }},\n\nWelcome! Verify your email: {{ verify_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "user.email_verified",
+    "subject": "Email verified — {{ platform_name }}",
+    "html_body": "<h1>Email verified!</h1><p>Hi {{ user_name }},</p><p>Your email has been verified. You now have full access to your account.</p><p><a href=\"{{ dashboard_url }}\">Go to dashboard</a></p>",
+    "text_body": "Hi {{ user_name }},\n\nYour email is verified.\n\nDashboard: {{ dashboard_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "user.welcome",
+    "subject": "Getting started with {{ platform_name }}",
+    "html_body": "<h1>Welcome aboard!</h1><p>Hi {{ user_name }},</p><p>Here are some tips to get started:</p><ul><li>Complete your <a href=\"{{ profile_url }}\">profile</a></li><li>Browse our <a href=\"{{ plans_url }}\">plans</a></li><li>Visit the <a href=\"{{ help_url }}\">help center</a></li></ul>",
+    "text_body": "Hi {{ user_name }},\n\nWelcome! Here are some tips:\n- Complete your profile: {{ profile_url }}\n- Browse plans: {{ plans_url }}\n- Help center: {{ help_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "user.password_reset",
+    "subject": "Password reset — {{ platform_name }}",
+    "html_body": "<h1>Password reset</h1><p>Hi {{ user_name }},</p><p>Click below to reset your password. This link expires in {{ expiry_minutes }} minutes.</p><p><a href=\"{{ reset_url }}\">Reset password</a></p><p>If you didn't request this, ignore this email.</p>",
+    "text_body": "Hi {{ user_name }},\n\nReset your password: {{ reset_url }}\n\nExpires in {{ expiry_minutes }} minutes.\n\nIf you didn't request this, ignore this email.",
+    "is_active": true
+  },
+  {
+    "event_type": "user.account_deactivated",
+    "subject": "Account deactivated — {{ platform_name }}",
+    "html_body": "<h1>Account deactivated</h1><p>Hi {{ user_name }},</p><p>Your account has been deactivated. If this was a mistake, please <a href=\"{{ support_url }}\">contact support</a>.</p>",
+    "text_body": "Hi {{ user_name }},\n\nYour account has been deactivated.\n\nContact support: {{ support_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "invoice.created",
+    "subject": "Invoice {{ invoice_number }} — {{ platform_name }}",
+    "html_body": "<h1>New invoice</h1><p>Hi {{ user_name }},</p><p>Invoice <strong>{{ invoice_number }}</strong> for <strong>{{ total_amount }} {{ currency }}</strong> has been created.</p><p><a href=\"{{ invoice_url }}\">View invoice</a></p>",
+    "text_body": "Hi {{ user_name }},\n\nInvoice {{ invoice_number }} for {{ total_amount }} {{ currency }}.\n\nView: {{ invoice_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "invoice.paid",
+    "subject": "Payment received — Invoice {{ invoice_number }}",
+    "html_body": "<h1>Payment received</h1><p>Hi {{ user_name }},</p><p>Payment of <strong>{{ total_amount }} {{ currency }}</strong> for invoice <strong>{{ invoice_number }}</strong> has been received. Thank you!</p><p><a href=\"{{ invoice_url }}\">View invoice</a></p>",
+    "text_body": "Hi {{ user_name }},\n\nPayment of {{ total_amount }} {{ currency }} received for invoice {{ invoice_number }}.\n\nView: {{ invoice_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "invoice.overdue",
+    "subject": "Payment overdue — Invoice {{ invoice_number }}",
+    "html_body": "<h1>Payment overdue</h1><p>Hi {{ user_name }},</p><p>Invoice <strong>{{ invoice_number }}</strong> for <strong>{{ total_amount }} {{ currency }}</strong> is overdue. Please pay promptly to avoid service interruption.</p><p><a href=\"{{ pay_url }}\">Pay now</a></p>",
+    "text_body": "Hi {{ user_name }},\n\nInvoice {{ invoice_number }} for {{ total_amount }} {{ currency }} is overdue.\n\nPay now: {{ pay_url }}",
+    "is_active": true
+  },
+  {
+    "event_type": "invoice.refunded",
+    "subject": "Refund processed — Invoice {{ invoice_number }}",
+    "html_body": "<h1>Refund processed</h1><p>Hi {{ user_name }},</p><p>A refund of <strong>{{ refund_amount }} {{ currency }}</strong> has been processed for invoice <strong>{{ invoice_number }}</strong>.</p>",
+    "text_body": "Hi {{ user_name }},\n\nRefund of {{ refund_amount }} {{ currency }} processed for invoice {{ invoice_number }}.",
+    "is_active": true
+  },
+  {
+    "event_type": "contact_form.received",
+    "subject": "New contact form submission from {{ sender_name }}",
+    "html_body": "<h1>New contact form</h1><p><strong>From:</strong> {{ sender_name }} ({{ sender_email }})</p><p><strong>Subject:</strong> {{ message_subject }}</p><p>{{ message_body }}</p>",
+    "text_body": "New contact form\n\nFrom: {{ sender_name }} ({{ sender_email }})\nSubject: {{ message_subject }}\n\n{{ message_body }}",
+    "is_active": true
+  }
+]
