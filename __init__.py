@@ -57,6 +57,14 @@ class EmailPlugin(BasePlugin):
     def get_url_prefix(self) -> Optional[str]:
         return ""
 
+    @property
+    def admin_permissions(self):
+        return [
+            {"key": "email.templates.view", "label": "View email templates", "group": "Email"},
+            {"key": "email.templates.manage", "label": "Manage email templates", "group": "Email"},
+            {"key": "email.configure", "label": "Email settings", "group": "Email"},
+        ]
+
     def on_enable(self) -> None:
         pass
 

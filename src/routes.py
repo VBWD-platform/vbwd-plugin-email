@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from flask import Blueprint, jsonify, request
 
-from vbwd.middleware.auth import require_auth, require_admin
+from vbwd.middleware.auth import require_auth, require_admin, require_permission
 from vbwd.utils.validation import parse_uuid_or_none
 
 email_bp = Blueprint("email", __name__)
@@ -68,6 +68,7 @@ def _template_svc():
 @email_bp.route("/api/v1/admin/email/templates", methods=["GET"])
 @require_auth
 @require_admin
+@require_permission("email.templates.view")
 def list_templates():
     from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
@@ -84,6 +85,7 @@ def list_templates():
 @email_bp.route("/api/v1/admin/email/templates", methods=["POST"])
 @require_auth
 @require_admin
+@require_permission("email.templates.manage")
 def create_template():
     from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
@@ -112,6 +114,7 @@ def create_template():
 @email_bp.route("/api/v1/admin/email/templates/import", methods=["POST"])
 @require_auth
 @require_admin
+@require_permission("email.templates.manage")
 def import_templates():
     from vbwd.extensions import db
     from plugins.email.src.models.email_template import EmailTemplate
@@ -159,6 +162,7 @@ def import_templates():
 @email_bp.route("/api/v1/admin/email/templates/<template_id>", methods=["DELETE"])
 @require_auth
 @require_admin
+@require_permission("email.templates.manage")
 def delete_template(template_id: str):
     if parse_uuid_or_none(template_id) is None:
         return jsonify({"error": "invalid id"}), 400
@@ -181,6 +185,7 @@ def delete_template(template_id: str):
 @email_bp.route("/api/v1/admin/email/templates/preview", methods=["POST"])
 @require_auth
 @require_admin
+@require_permission("email.templates.view")
 def preview_template():
     data = request.get_json(silent=True) or {}
     event_type = data.get("event_type", "")
@@ -206,6 +211,7 @@ def preview_template():
 @email_bp.route("/api/v1/admin/email/templates/<template_id>", methods=["GET"])
 @require_auth
 @require_admin
+@require_permission("email.templates.view")
 def get_template(template_id: str):
     if parse_uuid_or_none(template_id) is None:
         return jsonify({"error": "invalid id"}), 400
@@ -221,6 +227,7 @@ def get_template(template_id: str):
 @email_bp.route("/api/v1/admin/email/templates/<template_id>", methods=["PUT"])
 @require_auth
 @require_admin
+@require_permission("email.templates.manage")
 def update_template(template_id: str):
     if parse_uuid_or_none(template_id) is None:
         return jsonify({"error": "invalid id"}), 400
@@ -249,6 +256,7 @@ def update_template(template_id: str):
 @email_bp.route("/api/v1/admin/email/event-types", methods=["GET"])
 @require_auth
 @require_admin
+@require_permission("email.templates.view")
 def list_event_types():
     # Import event_contexts to trigger auto-registration of core schemas, then
     # read the full registry (which also includes schemas from other plugins).
@@ -266,6 +274,7 @@ def list_event_types():
 @email_bp.route("/api/v1/admin/email/test-send", methods=["POST"])
 @require_auth
 @require_admin
+@require_permission("email.templates.manage")
 def test_send():
     data = request.get_json(silent=True) or {}
     event_type = data.get("event_type")
