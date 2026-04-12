@@ -60,8 +60,16 @@ class EmailPlugin(BasePlugin):
     @property
     def admin_permissions(self):
         return [
-            {"key": "email.templates.view", "label": "View email templates", "group": "Email"},
-            {"key": "email.templates.manage", "label": "Manage email templates", "group": "Email"},
+            {
+                "key": "email.templates.view",
+                "label": "View email templates",
+                "group": "Email",
+            },
+            {
+                "key": "email.templates.manage",
+                "label": "Manage email templates",
+                "group": "Email",
+            },
             {"key": "email.configure", "label": "Email settings", "group": "Email"},
         ]
 
