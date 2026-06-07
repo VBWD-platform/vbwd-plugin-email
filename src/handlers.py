@@ -23,19 +23,21 @@ logger = logging.getLogger(__name__)
 def _make_email_service(cfg: dict):
     """Factory: create EmailService with active registry + db.session."""
     from vbwd.extensions import db
+    from plugins.email.src.config import resolve_smtp_config
     from plugins.email.src.services.sender_registry import EmailSenderRegistry
     from plugins.email.src.services.smtp_sender import SmtpEmailSender
     from plugins.email.src.services.email_service import EmailService
 
+    resolved = resolve_smtp_config(cfg)
     registry = EmailSenderRegistry()
     smtp = SmtpEmailSender(
-        host=cfg.get("smtp_host", "localhost"),
-        port=int(cfg.get("smtp_port", 587)),
-        username=cfg.get("smtp_user") or None,
-        password=cfg.get("smtp_password") or None,
-        use_tls=cfg.get("smtp_use_tls", True),
-        from_address=cfg.get("smtp_from_email", "noreply@example.com"),
-        from_name=cfg.get("smtp_from_name", "VBWD"),
+        host=resolved.get("smtp_host", "localhost"),
+        port=int(resolved.get("smtp_port", 587)),
+        username=resolved.get("smtp_user") or None,
+        password=resolved.get("smtp_password") or None,
+        use_tls=resolved.get("smtp_use_tls", True),
+        from_address=resolved.get("smtp_from_email", "noreply@example.com"),
+        from_name=resolved.get("smtp_from_name", "VBWD"),
     )
     registry.register(smtp)
     registry.set_active("smtp")

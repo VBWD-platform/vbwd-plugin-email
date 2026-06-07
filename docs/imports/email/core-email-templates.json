@@ -64,9 +64,9 @@
   },
   {
     "event_type": "contact_form.received",
-    "subject": "New contact form submission from {{ sender_name }}",
-    "html_body": "<h1>New contact form</h1><p><strong>From:</strong> {{ sender_name }} ({{ sender_email }})</p><p><strong>Subject:</strong> {{ message_subject }}</p><p>{{ message_body }}</p>",
-    "text_body": "New contact form\n\nFrom: {{ sender_name }} ({{ sender_email }})\nSubject: {{ message_subject }}\n\n{{ message_body }}",
+    "subject": "New contact form submission ({{ widget_slug }})",
+    "html_body": "<h1>New contact form submission</h1><p><strong>Form:</strong> {{ widget_slug }}</p><pre style=\"font-family:inherit;white-space:pre-wrap;background:#f8fafc;padding:12px;border-radius:4px;\">{{ fields_text }}</pre><p style=\"color:#9ca3af;font-size:12px;\">Submitted from IP: {{ remote_ip }}</p>",
+    "text_body": "New contact form submission\nForm: {{ widget_slug }}\n\n{{ fields_text }}\n\nIP: {{ remote_ip }}",
     "is_active": true
   }
 ]
