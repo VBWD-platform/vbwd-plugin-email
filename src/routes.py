@@ -112,49 +112,6 @@ def create_template():
 # ---------------------------------------------------------------------------
 
 
-@email_bp.route("/api/v1/admin/email/templates/import", methods=["POST"])
-@require_auth
-@require_admin
-@require_permission("email.templates.manage")
-def import_templates():
-    from vbwd.extensions import db
-    from plugins.email.src.models.email_template import EmailTemplate
-
-    data = request.get_json(silent=True)
-    if not data or not isinstance(data, list):
-        return jsonify({"error": "JSON array of templates required"}), 400
-
-    created = 0
-    updated = 0
-    for item in data:
-        event_type = item.get("event_type")
-        if not event_type:
-            continue
-
-        existing = (
-            db.session.query(EmailTemplate).filter_by(event_type=event_type).first()
-        )
-        if existing:
-            existing.subject = item.get("subject", existing.subject)
-            existing.html_body = item.get("html_body", existing.html_body)
-            existing.text_body = item.get("text_body", existing.text_body)
-            existing.is_active = item.get("is_active", existing.is_active)
-            updated += 1
-        else:
-            tpl = EmailTemplate(
-                event_type=event_type,
-                subject=item.get("subject", ""),
-                html_body=item.get("html_body", ""),
-                text_body=item.get("text_body", ""),
-                is_active=item.get("is_active", True),
-            )
-            db.session.add(tpl)
-            created += 1
-
-    db.session.commit()
-    return jsonify({"created": created, "updated": updated}), 200
-
-
 # ---------------------------------------------------------------------------
 # Delete template
 # ---------------------------------------------------------------------------

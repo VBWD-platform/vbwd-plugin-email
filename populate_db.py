@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Idempotent seed for the email plugin's CORE transactional templates.
 
-Loads ``docs/imports/email/core-email-templates.json`` (the same JSON the admin
-"Import templates" endpoint consumes) and UPSERTS each entry into the
-``email_template`` table keyed by ``event_type`` — exactly the logic of
-``POST /api/v1/admin/email/templates/import``. This guarantees a cold-start /
-fresh-CI database has the core templates (including ``contact_form.received``)
-without a manual admin import.
+Loads ``docs/imports/email/core-email-templates.json`` and UPSERTS each entry
+into the ``email_template`` table keyed by ``event_type``. This guarantees a
+cold-start / fresh-CI database has the core templates (including
+``contact_form.received``) without a manual admin import. Template import /
+export is otherwise served by the unified data-exchange framework
+(``/api/v1/admin/data-exchange/*``).
 
 Seeding goes through the EmailTemplate model/repository layer, never raw SQL —
 see ``feedback_no_direct_db_for_test_data.md``.
