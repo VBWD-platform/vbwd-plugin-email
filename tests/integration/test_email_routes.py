@@ -59,6 +59,20 @@ def app():
     from vbwd.extensions import limiter
 
     limiter.reset()
+
+    # Build the schema once per process (create_all, checkfirst — never drops, so
+    # it cannot wipe data) and commit baseline reference rows once. Each test then
+    # isolates itself via a rolled-back transaction (no TRUNCATE, no DROP) — see
+    # vbwd/testing/integration_db.py.
+    with app.app_context():
+        from vbwd.extensions import db as _db
+        from vbwd.testing.integration_db import ensure_schema_and_baseline
+
+        # Register the email-template model so the once-built schema includes it.
+        from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
+
+        ensure_schema_and_baseline(_db)
+
     yield app
 
 
@@ -69,15 +83,20 @@ def client(app):
 
 @pytest.fixture
 def db(app):
+    """Isolate each test in a rolled-back transaction (self-cleaning, no wipe).
+
+    The schema + baseline reference rows are built once in the ``app`` fixture;
+    each test runs inside a transaction that is rolled back at teardown, so
+    nothing it writes persists — it never wipes the shared ``*_test`` database.
+    See vbwd/testing/integration_db.py.
+    """
     from vbwd.extensions import db
 
     with app.app_context():
-        from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
+        from vbwd.testing.integration_db import rollback_isolation
 
-        db.create_all()
-        yield db
-        db.session.remove()
-        db.drop_all()
+        with rollback_isolation(db):
+            yield db
 
 
 def _make_user(app, db_session, email: str, role: str = "ADMIN", active: bool = True):
