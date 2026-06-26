@@ -1,7 +1,7 @@
 """Email event handlers — subscribe to EventBus and fire emails.
 
 Architecture: The email plugin is AGNOSTIC. It does not know about booking,
-taro, ghrm, or any other plugin. It subscribes to ALL events via
+tarot, ghrm, or any other plugin. It subscribes to ALL events via
 ``bus.subscribe_all()`` and forwards every event to ``EmailService.send_event()``.
 If a template exists in the DB for that event_type, the email is sent.
 If not, the event is silently ignored.
