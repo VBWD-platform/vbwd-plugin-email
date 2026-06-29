@@ -37,7 +37,7 @@ class EmailPlugin(BasePlugin):
     def metadata(self) -> PluginMetadata:
         return PluginMetadata(
             name="email",
-            version="26.6",
+            version="26.6.1",
             author="VBWD Team",
             description="Transactional email — templates, SMTP, event-driven dispatch",
             dependencies=[],
