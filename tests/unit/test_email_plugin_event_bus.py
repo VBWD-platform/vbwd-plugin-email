@@ -4,10 +4,29 @@ The email plugin is AGNOSTIC: it uses bus.subscribe_all() to receive every
 event and forwards it to EmailService.send_event(). If a template exists
 for the event_type, an email is sent; otherwise the event is ignored.
 """
+import contextlib
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from vbwd.events.bus import EventBus
 from plugins.email import EmailPlugin
+
+
+@pytest.fixture(autouse=True)
+def _stub_savepoint(monkeypatch):
+    """Stub the per-send SAVEPOINT with a no-op context manager.
+
+    The handler now wraps each send in ``db.session.begin_nested()`` so a failed
+    template query rolls back to a savepoint instead of poisoning the shared
+    transaction. These are pure unit tests with no database or app context, so
+    the savepoint has nothing to open — swap ``vbwd.extensions.db`` for a fake
+    whose ``begin_nested`` is a no-op context manager. Dispatch behaviour (which
+    is what these tests assert) is unchanged.
+    """
+    fake_db = MagicMock()
+    fake_db.session.begin_nested.side_effect = lambda: contextlib.nullcontext()
+    monkeypatch.setattr("vbwd.extensions.db", fake_db)
 
 
 def _enabled_plugin(config=None) -> tuple:

@@ -57,9 +57,18 @@ def register_handlers(bus: "EventBus", cfg: dict) -> None:
     """
 
     def _safe_send(event_type: str, to: str, context: dict) -> None:
+        from vbwd.extensions import db
+
         try:
-            svc = _make_email_service(cfg)
-            svc.send_event(event_type, to, context)
+            # Isolate the email DB work in a SAVEPOINT: a failure here (missing
+            # template table, transient DB error) rolls back to the savepoint and
+            # never poisons the outer transaction that drives the primary flow
+            # (payment capture / access grant). Without this, a failed template
+            # query aborts the shared session and every later subscriber dies
+            # with InFailedSqlTransaction.
+            with db.session.begin_nested():
+                svc = _make_email_service(cfg)
+                svc.send_event(event_type, to, context)
         except Exception as exc:  # noqa: BLE001
             logger.warning("[email] Failed to send %s to %s: %s", event_type, to, exc)
 

@@ -47,7 +47,7 @@ def _ensure_test_db(url: str) -> None:
         engine.dispose()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def app():
     from vbwd.app import create_app
 
@@ -61,20 +61,42 @@ def app():
         "JWT_SECRET_KEY": "test-jwt-secret-key",
         "FLASK_SECRET_KEY": "test-secret-key",
     }
-    return create_app(test_config)
+    flask_app = create_app(test_config)
+
+    # Build the schema once per process (create_all, checkfirst — never drops,
+    # so it cannot wipe data) and commit baseline reference rows once. Each test
+    # then isolates itself via a rolled-back transaction (no TRUNCATE, no DROP) —
+    # see vbwd/testing/integration_db.py. The old drop_all() teardown was a wipe
+    # anti-pattern: this suite shares the ``*_test`` DB with sibling suites, so
+    # drop_all() CASCADE-failed on their tables and left committed rows behind,
+    # poisoning every other email suite that assumes a clean template table.
+    with flask_app.app_context():
+        from vbwd.extensions import db as _db
+        from vbwd.testing.integration_db import ensure_schema_and_baseline
+
+        # Register the email-template model so the once-built schema includes it.
+        from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
+
+        ensure_schema_and_baseline(_db)
+
+    yield flask_app
 
 
 @pytest.fixture
 def db(app):
+    """Isolate each test in a rolled-back transaction (self-cleaning, no wipe).
+
+    Commits inside the test become SAVEPOINT releases (the test sees its own
+    seeded rows), and the whole transaction is rolled back at teardown — nothing
+    persists to the shared ``*_test`` database.
+    """
     from vbwd.extensions import db
 
     with app.app_context():
-        from plugins.email.src.models.email_template import EmailTemplate  # noqa: F401
+        from vbwd.testing.integration_db import rollback_isolation
 
-        db.create_all()
-        yield db
-        db.session.remove()
-        db.drop_all()
+        with rollback_isolation(db):
+            yield db
 
 
 class TestPopulateDbSeed:
